@@ -44,8 +44,12 @@ class Settings(BaseSettings):
     @classmethod
     def parse_cors(cls, v):
         if isinstance(v, str):
-            import json
-            return json.loads(v)
+            v = v.strip()
+            if v.startswith("["):
+                import json
+                return json.loads(v)
+            # 쉼표 구분 문자열 지원: "https://a.com,https://b.com"
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
 
