@@ -28,6 +28,8 @@ def _build_user_prompt(req: GenerateCaptionRequest) -> str:
 async def generate_caption(req: GenerateCaptionRequest) -> GenerateCaptionResponse:
     if settings.AI_PROVIDER == "anthropic":
         return await _generate_anthropic(req)
+    if settings.AI_PROVIDER == "gemini":
+        return await _generate_gemini(req)
     return await _generate_openai(req)
 
 
@@ -82,6 +84,34 @@ async def _generate_anthropic(req: GenerateCaptionRequest) -> GenerateCaptionRes
         text = text.split("```")[1].split("```")[0].strip()
 
     data = json.loads(text)
+    caption = data.get("caption", "")
+    hashtags = data.get("hashtags", [])
+
+    full_text = _combine(caption, hashtags)
+    return GenerateCaptionResponse(caption=caption, hashtags=hashtags, full_text=full_text)
+
+
+async def _generate_gemini(req: GenerateCaptionRequest) -> GenerateCaptionResponse:
+    import json
+    import google.generativeai as genai
+
+    if not settings.GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY가 설정되지 않았습니다.")
+
+    genai.configure(api_key=settings.GEMINI_API_KEY)
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        system_instruction=_SYSTEM_PROMPT,
+    )
+    response = await model.generate_content_async(
+        _build_user_prompt(req),
+        generation_config=genai.types.GenerationConfig(
+            response_mime_type="application/json",
+            temperature=0.7,
+        ),
+    )
+
+    data = json.loads(response.text)
     caption = data.get("caption", "")
     hashtags = data.get("hashtags", [])
 

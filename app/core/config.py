@@ -26,7 +26,8 @@ class Settings(BaseSettings):
     # AI
     OPENAI_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
-    AI_PROVIDER: str = "openai"  # "openai" | "anthropic"
+    GEMINI_API_KEY: str = ""
+    AI_PROVIDER: str = "gemini"  # "openai" | "anthropic" | "gemini"
 
     # 아임포트 (PortOne)
     IMP_KEY: str = ""      # REST API 키
