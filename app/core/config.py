@@ -2,9 +2,7 @@
 환경 변수 설정 (Pydantic BaseSettings)
 """
 from pathlib import Path
-from typing import List
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,25 +31,16 @@ class Settings(BaseSettings):
     IMP_KEY: str = ""      # REST API 키
     IMP_SECRET: str = ""   # REST API Secret
 
-    # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+    # CORS (쉼표 구분 문자열: "https://a.com,https://b.com")
+    CORS_ORIGINS: str = "http://localhost:3000"
 
     # 파일 저장 경로 (프로젝트 루트 기준)
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
     UPLOADS_DIR: Path = BASE_DIR / "uploads"
     SESSIONS_DIR: Path = BASE_DIR / "sessions"
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors(cls, v):
-        if isinstance(v, str):
-            v = v.strip()
-            if v.startswith("["):
-                import json
-                return json.loads(v)
-            # 쉼표 구분 문자열 지원: "https://a.com,https://b.com"
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
+    def get_cors_origins(self) -> list[str]:
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
 
 settings = Settings()
