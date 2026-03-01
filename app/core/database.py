@@ -6,9 +6,14 @@ from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config import settings
 
+import ssl as _ssl
+
 _connect_args = {}
 if settings.DATABASE_URL.startswith("postgresql"):
-    _connect_args = {"ssl": "require"}
+    _ssl_ctx = _ssl.create_default_context()
+    _ssl_ctx.check_hostname = False
+    _ssl_ctx.verify_mode = _ssl.CERT_NONE
+    _connect_args = {"ssl": _ssl_ctx}
 
 engine = create_async_engine(
     settings.DATABASE_URL,
