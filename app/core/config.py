@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     AI_PROVIDER: str = "gemini"  # "openai" | "anthropic" | "gemini"
 
+    # Cloudflare R2
+    R2_ACCOUNT_ID: str = ""
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_BUCKET_NAME: str = "autosns-media"
+    R2_PUBLIC_URL: str = ""  # https://pub-xxx.r2.dev or custom domain
+
     # 아임포트 (PortOne)
     IMP_KEY: str = ""      # REST API 키
     IMP_SECRET: str = ""   # REST API Secret

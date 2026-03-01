@@ -110,20 +110,34 @@ async def execute_post(db: AsyncSession, post_id: int) -> None:
         # 클라이언트 획득
         cl = await loop.run_in_executor(None, get_client, username, password, session_dir)
 
-        paths = post.media_paths
+        # R2 URL이면 임시 파일로 다운로드
+        from app.core.storage import download_to_tempfile
+        raw_paths = post.media_paths
+        tmp_files: list[str] = []
+        for p in raw_paths:
+            suffix = Path(p).suffix or ".bin"
+            local = await download_to_tempfile(p, suffix)
+            tmp_files.append(local)
+
         caption = post.caption
         post_type = post.post_type
 
-        if post_type == "photo":
-            await loop.run_in_executor(None, upload_photo, cl, paths[0], caption)
-        elif post_type == "carousel":
-            await loop.run_in_executor(None, upload_carousel, cl, paths, caption)
-        elif post_type == "video":
-            await loop.run_in_executor(None, upload_video, cl, paths[0], caption, False)
-        elif post_type == "reel":
-            await loop.run_in_executor(None, upload_video, cl, paths[0], caption, True)
-        else:
-            raise ValueError(f"지원하지 않는 post_type: {post_type}")
+        try:
+            if post_type == "photo":
+                await loop.run_in_executor(None, upload_photo, cl, tmp_files[0], caption)
+            elif post_type == "carousel":
+                await loop.run_in_executor(None, upload_carousel, cl, tmp_files, caption)
+            elif post_type == "video":
+                await loop.run_in_executor(None, upload_video, cl, tmp_files[0], caption, False)
+            elif post_type == "reel":
+                await loop.run_in_executor(None, upload_video, cl, tmp_files[0], caption, True)
+            else:
+                raise ValueError(f"지원하지 않는 post_type: {post_type}")
+        finally:
+            # R2에서 다운로드한 임시 파일 정리
+            for tmp in tmp_files:
+                if tmp not in raw_paths:
+                    Path(tmp).unlink(missing_ok=True)
 
         post.status = "done"
         post.executed_at = datetime.now(timezone.utc)
